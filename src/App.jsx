@@ -1,12 +1,54 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import TripForm from "./TripForm";
 import ExpenseList from "./ExpenseList";
 import Summary from "./Summary";
+
+const STORAGE_KEY = "trip-expense-manager-data";
+
+const loadFromStorage = () => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (!data || typeof data !== "object") return null;
+    return {
+      tripCreated: Boolean(data.tripCreated),
+      participants: Array.isArray(data.participants) ? data.participants : [],
+      expenses: Array.isArray(data.expenses) ? data.expenses : [],
+    };
+  } catch {
+    return null;
+  }
+};
+
+const saveToStorage = (tripCreated, participants, expenses) => {
+  try {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ tripCreated, participants, expenses })
+    );
+  } catch (_) {}
+};
 
 const App = () => {
   const [tripCreated, setTripCreated] = useState(false);
   const [participants, setParticipants] = useState([]);
   const [expenses, setExpenses] = useState([]);
+
+  // Load saved data once on mount (refresh or reopen tab)
+  useEffect(() => {
+    const saved = loadFromStorage();
+    if (saved) {
+      setTripCreated(saved.tripCreated);
+      setParticipants(saved.participants);
+      setExpenses(saved.expenses);
+    }
+  }, []);
+
+  // Save to localStorage whenever trip data changes
+  useEffect(() => {
+    saveToStorage(tripCreated, participants, expenses);
+  }, [tripCreated, participants, expenses]);
 
   const handleCreateTrip = () => {
     setTripCreated(true);
