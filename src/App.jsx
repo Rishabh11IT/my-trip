@@ -30,22 +30,22 @@ const saveToStorage = (tripCreated, participants, expenses) => {
   } catch (_) {}
 };
 
+// Read saved data once so we never overwrite it with empty state on first load
+const getInitialState = () => {
+  const saved = loadFromStorage();
+  return {
+    tripCreated: saved?.tripCreated ?? false,
+    participants: saved?.participants ?? [],
+    expenses: saved?.expenses ?? [],
+  };
+};
+
 const App = () => {
-  const [tripCreated, setTripCreated] = useState(false);
-  const [participants, setParticipants] = useState([]);
-  const [expenses, setExpenses] = useState([]);
+  const [tripCreated, setTripCreated] = useState(() => getInitialState().tripCreated);
+  const [participants, setParticipants] = useState(() => getInitialState().participants);
+  const [expenses, setExpenses] = useState(() => getInitialState().expenses);
 
-  // Load saved data once on mount (refresh or reopen tab)
-  useEffect(() => {
-    const saved = loadFromStorage();
-    if (saved) {
-      setTripCreated(saved.tripCreated);
-      setParticipants(saved.participants);
-      setExpenses(saved.expenses);
-    }
-  }, []);
-
-  // Save to localStorage whenever trip data changes
+  // Save to localStorage whenever trip data changes (not on first paint, so we don't overwrite saved data)
   useEffect(() => {
     saveToStorage(tripCreated, participants, expenses);
   }, [tripCreated, participants, expenses]);
